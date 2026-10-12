@@ -120,3 +120,35 @@ export const FINANCE_CATEGORIES = [
   "Service charge",
   "General",
 ];
+
+// How a person prefers to be contacted.
+export const CONTACT_METHOD = {
+  EMAIL: "EMAIL",
+  WHATSAPP: "WHATSAPP",
+  PHONE: "PHONE",
+  POST: "POST",
+  IN_PERSON: "IN_PERSON",
+} as const;
+export type ContactMethod =
+  (typeof CONTACT_METHOD)[keyof typeof CONTACT_METHOD];
+export const ALL_CONTACT_METHODS = Object.values(CONTACT_METHOD) as ContactMethod[];
+export const CONTACT_METHOD_LABELS: Record<ContactMethod, string> = {
+  EMAIL: "Email",
+  WHATSAPP: "WhatsApp",
+  PHONE: "Phone call",
+  POST: "Post (letter)",
+  IN_PERSON: "In person",
+};
+// Methods that don't rely on the person using this app/email.
+export const NON_DIGITAL_CONTACT: ContactMethod[] = [
+  CONTACT_METHOD.PHONE,
+  CONTACT_METHOD.POST,
+  CONTACT_METHOD.IN_PERSON,
+];
+
+// Setting keys stored in the Setting table.
+export const SETTING_KEYS = {
+  WHATSAPP_RESIDENTS: "whatsapp_residents_url",
+  WHATSAPP_BOARD: "whatsapp_board_url",
+  HERO_IMAGE: "hero_image_url",
+} as const;

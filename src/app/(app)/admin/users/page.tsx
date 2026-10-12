@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
-import { type Role } from "@/lib/constants";
+import { type Role, type ContactMethod } from "@/lib/constants";
 import { AddUserForm, AddFlatForm, AddBlockForm } from "./user-forms";
 import { UserRow } from "./user-row";
 
@@ -30,7 +30,7 @@ export default async function UsersPage() {
     <div className="space-y-8">
       <PageHeader
         title="People"
-        description="Manage accounts, roles and flats. New people receive an email to set their password."
+        description="Manage accounts, roles, flats and how each person prefers to be contacted. People who don't use email/tech are highlighted so the board knows to phone or post."
       />
 
       <section className="card">
@@ -46,8 +46,8 @@ export default async function UsersPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
               <tr>
-                <th className="px-3 py-2">Person</th>
-                <th className="px-3 py-2">Role &amp; flat</th>
+                <th className="px-3 py-2">Person &amp; contact</th>
+                <th className="px-3 py-2">Role, flat &amp; preference</th>
                 <th className="px-3 py-2">Actions</th>
               </tr>
             </thead>
@@ -63,6 +63,9 @@ export default async function UsersPage() {
                     flatId: u.flatId,
                     active: u.active,
                     hasPassword: Boolean(u.passwordHash),
+                    preferredContact: u.preferredContact as ContactMethod,
+                    phone: u.phone,
+                    commsNotes: u.commsNotes,
                   }}
                   flats={flatOptions}
                   isSelf={u.id === admin.id}

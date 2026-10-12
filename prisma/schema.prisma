@@ -22,6 +22,10 @@ model User {
   passwordHash String? // null until the user accepts their invite
   role         String // DIRECTOR | SECRETARY | LANDLORD | RENTER | HELPER
   phone        String?
+  // How this person prefers to be contacted (important for residents who
+  // don't use email/tech): EMAIL | WHATSAPP | PHONE | POST | IN_PERSON
+  preferredContact String  @default("EMAIL")
+  commsNotes       String? // e.g. "no email — phone daughter on 07…"
   active       Boolean  @default(true)
   flatId       String?
   flat         Flat?    @relation(fields: [flatId], references: [id], onDelete: SetNull)
@@ -244,4 +248,11 @@ model BudgetLine {
   budgeted Float  @default(0)
   actual   Float  @default(0)
   order    Int    @default(0)
+}
+
+// Simple key/value settings (e.g. WhatsApp group links, hero image URL).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

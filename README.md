@@ -42,8 +42,16 @@ Every content item is either **Public** (residents can see it) or **Internal**
   landlords** (leaseholders); renters and helpers don't see it. Only the board
   can edit. Individual budgets/pages can be marked internal (board-only).
 - **People** (admin) — accounts, roles, and the **blocks & flats** that make up
-  the property. The building is modelled as one or more **blocks**, each
-  containing its own flats; residents are linked to a flat.
+  the property (one or more **blocks**, each with its own flats). Each person
+  also has a **preferred contact method** (email / WhatsApp / phone / post / in
+  person) and free-text notes. People who don't use email/tech are **highlighted**
+  so the board knows to phone or post instead.
+- **Settings** (admin) — the **WhatsApp group links** (a residents group shown to
+  everyone, a board group shown only to directors/secretary) and an optional
+  **photo for the sign-in page**.
+
+The **sign-in page is a landing page** for Belvedere Court, Putney, and the whole
+app is **mobile-friendly** (the menu collapses on small screens).
 
 Financial figures use **GBP (£)** by default — change `CURRENCY` /
 `NEXT_PUBLIC_CURRENCY` in the environment to use another currency.

@@ -19,6 +19,9 @@ import {
   formatDateTime,
 } from "@/components/ui";
 import { SearchBox } from "@/components/search-box";
+import { ChatGroups } from "@/components/chat-groups";
+import { getSettings } from "@/lib/settings";
+import { SETTING_KEYS } from "@/lib/constants";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -30,6 +33,11 @@ export default async function DashboardPage() {
     ? (await prisma.reserveFundEntry.aggregate({ _sum: { amount: true } }))._sum
         .amount ?? 0
     : 0;
+
+  const chat = await getSettings([
+    SETTING_KEYS.WHATSAPP_RESIDENTS,
+    SETTING_KEYS.WHATSAPP_BOARD,
+  ]);
 
   const [announcements, upcomingMeetings, openProjects, recentDecisions, drafts] =
     await Promise.all([
@@ -72,6 +80,12 @@ export default async function DashboardPage() {
       <PageHeader title={`Welcome, ${user.name}`} />
 
       <SearchBox />
+
+      <ChatGroups
+        residentsUrl={chat[SETTING_KEYS.WHATSAPP_RESIDENTS]}
+        boardUrl={chat[SETTING_KEYS.WHATSAPP_BOARD]}
+        isAdmin={admin}
+      />
 
       {showFinance ? (
         <Link

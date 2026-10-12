@@ -42,12 +42,17 @@ async function main() {
     email: string;
     role: string;
     flatKey?: string;
+    phone?: string;
+    preferredContact?: string;
+    commsNotes?: string;
+    key?: string;
   }> = [
-    { name: "Dana Director", email: "director@belvedere.test", role: "DIRECTOR", flatKey: "Belvedere House/Flat 1" },
-    { name: "Sam Secretary", email: "secretary@belvedere.test", role: "SECRETARY", flatKey: "Belvedere House/Flat 2" },
-    { name: "Laura Landlord", email: "landlord@belvedere.test", role: "LANDLORD", flatKey: "Belvedere House/Flat 3" },
-    { name: "Rob Renter", email: "renter@belvedere.test", role: "RENTER", flatKey: "Belvedere Court/Flat 1" },
-    { name: "Harry Helper", email: "helper@belvedere.test", role: "HELPER" },
+    { name: "Dana Director", email: "director@belvedere.test", role: "DIRECTOR", flatKey: "Belvedere House/Flat 1", preferredContact: "EMAIL", key: "DIRECTOR" },
+    { name: "Sam Secretary", email: "secretary@belvedere.test", role: "SECRETARY", flatKey: "Belvedere House/Flat 2", preferredContact: "WHATSAPP", key: "SECRETARY" },
+    { name: "Laura Landlord", email: "landlord@belvedere.test", role: "LANDLORD", flatKey: "Belvedere House/Flat 3", preferredContact: "PHONE", phone: "07700 900123", commsNotes: "Prefers a phone call to email.", key: "LANDLORD" },
+    { name: "Rob Renter", email: "renter@belvedere.test", role: "RENTER", flatKey: "Belvedere Court/Flat 1", preferredContact: "EMAIL", key: "RENTER" },
+    { name: "Harry Helper", email: "helper@belvedere.test", role: "HELPER", preferredContact: "WHATSAPP", key: "HELPER" },
+    { name: "Edna Mews", email: "edna@belvedere.test", role: "RENTER", flatKey: "Belvedere Court/Flat 2", preferredContact: "POST", commsNotes: "Does not use email or a smartphone — please post a letter or call her son.", key: "EDNA" },
   ];
 
   const users: Record<string, { id: string }> = {};
@@ -55,18 +60,27 @@ async function main() {
     const flatId = p.flatKey ? flatByKey[p.flatKey] ?? null : null;
     const u = await prisma.user.upsert({
       where: { email: p.email },
-      update: { role: p.role, flatId },
+      update: {
+        role: p.role,
+        flatId,
+        preferredContact: p.preferredContact ?? "EMAIL",
+        commsNotes: p.commsNotes ?? null,
+        phone: p.phone ?? null,
+      },
       create: {
         name: p.name,
         email: p.email,
         role: p.role,
         flatId,
+        phone: p.phone ?? null,
+        preferredContact: p.preferredContact ?? "EMAIL",
+        commsNotes: p.commsNotes ?? null,
         passwordHash,
         active: true,
         invitedAt: new Date(),
       },
     });
-    users[p.role] = { id: u.id };
+    if (p.key) users[p.key] = { id: u.id };
   }
 
   const director = users["DIRECTOR"].id;
@@ -280,6 +294,18 @@ async function main() {
           ],
         },
       },
+    });
+  }
+
+  // --- Settings (WhatsApp group links — placeholders) ---
+  for (const [key, value] of [
+    ["whatsapp_residents_url", "https://chat.whatsapp.com/EXAMPLE-residents"],
+    ["whatsapp_board_url", "https://chat.whatsapp.com/EXAMPLE-board"],
+  ] as const) {
+    await prisma.setting.upsert({
+      where: { key },
+      update: {},
+      create: { key, value },
     });
   }
 

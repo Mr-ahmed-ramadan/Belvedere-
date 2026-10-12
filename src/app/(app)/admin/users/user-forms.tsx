@@ -7,7 +7,12 @@ import {
   createBlockAction,
   type ActionState,
 } from "./actions";
-import { ALL_ROLES, ROLE_LABELS } from "@/lib/constants";
+import {
+  ALL_ROLES,
+  ROLE_LABELS,
+  ALL_CONTACT_METHODS,
+  CONTACT_METHOD_LABELS,
+} from "@/lib/constants";
 
 const initial: ActionState = {};
 
@@ -67,11 +72,39 @@ export function AddUserForm({ flats }: { flats: Flat[] }) {
             ))}
           </select>
         </div>
-        <div className="sm:col-span-2">
+        <div>
           <label className="label" htmlFor="phone">
             Phone (optional)
           </label>
           <input id="phone" name="phone" className="input" />
+        </div>
+        <div>
+          <label className="label" htmlFor="preferredContact">
+            Preferred contact
+          </label>
+          <select
+            id="preferredContact"
+            name="preferredContact"
+            defaultValue="EMAIL"
+            className="input"
+          >
+            {ALL_CONTACT_METHODS.map((m) => (
+              <option key={m} value={m}>
+                {CONTACT_METHOD_LABELS[m]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label" htmlFor="commsNotes">
+            Communication notes (optional)
+          </label>
+          <input
+            id="commsNotes"
+            name="commsNotes"
+            placeholder="e.g. no email — please phone or post a letter"
+            className="input"
+          />
         </div>
       </div>
       <button type="submit" className="btn btn-primary" disabled={pending}>

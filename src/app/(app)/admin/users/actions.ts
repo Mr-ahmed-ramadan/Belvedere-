@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { createAndSendInvite } from "@/lib/invites";
-import { ALL_ROLES } from "@/lib/constants";
+import { ALL_ROLES, ALL_CONTACT_METHODS } from "@/lib/constants";
 
 export type ActionState = { error?: string; success?: string };
 
@@ -15,6 +15,8 @@ const userSchema = z.object({
   role: z.enum(ALL_ROLES as [string, ...string[]]),
   phone: z.string().trim().optional(),
   flatId: z.string().trim().optional(),
+  preferredContact: z.enum(ALL_CONTACT_METHODS as [string, ...string[]]),
+  commsNotes: z.string().trim().optional(),
 });
 
 export async function createUserAction(
@@ -29,12 +31,15 @@ export async function createUserAction(
     role: formData.get("role"),
     phone: formData.get("phone") || undefined,
     flatId: formData.get("flatId") || undefined,
+    preferredContact: formData.get("preferredContact") || "EMAIL",
+    commsNotes: formData.get("commsNotes") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { name, email, role, phone, flatId } = parsed.data;
+  const { name, email, role, phone, flatId, preferredContact, commsNotes } =
+    parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return { error: "A user with that email already exists." };
@@ -46,6 +51,8 @@ export async function createUserAction(
       role,
       phone: phone || null,
       flatId: flatId || null,
+      preferredContact,
+      commsNotes: commsNotes || null,
       active: true,
     },
   });
@@ -79,6 +86,9 @@ const updateSchema = z.object({
   userId: z.string().min(1),
   role: z.enum(ALL_ROLES as [string, ...string[]]),
   flatId: z.string().optional(),
+  preferredContact: z.enum(ALL_CONTACT_METHODS as [string, ...string[]]),
+  phone: z.string().trim().optional(),
+  commsNotes: z.string().trim().optional(),
 });
 
 export async function updateUserAction(
@@ -90,13 +100,22 @@ export async function updateUserAction(
     userId: formData.get("userId"),
     role: formData.get("role"),
     flatId: formData.get("flatId") || undefined,
+    preferredContact: formData.get("preferredContact") || "EMAIL",
+    phone: formData.get("phone") || undefined,
+    commsNotes: formData.get("commsNotes") || undefined,
   });
   if (!parsed.success)
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
 
   await prisma.user.update({
     where: { id: parsed.data.userId },
-    data: { role: parsed.data.role, flatId: parsed.data.flatId || null },
+    data: {
+      role: parsed.data.role,
+      flatId: parsed.data.flatId || null,
+      preferredContact: parsed.data.preferredContact,
+      phone: parsed.data.phone || null,
+      commsNotes: parsed.data.commsNotes || null,
+    },
   });
   revalidatePath("/admin/users");
   return { success: "Saved." };

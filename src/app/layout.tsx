@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Belvedere — Block Management",
+  title: "Belvedere Court — Residents' Portal",
   description:
-    "Management system for the building: announcements, meetings, decisions, documents and projects.",
+    "The residents' portal for Belvedere Court, Putney: announcements, meetings, decisions, documents, projects and finances.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
