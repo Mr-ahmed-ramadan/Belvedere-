@@ -1,0 +1,175 @@
+// Belvedere — block management system
+// SQLite for a single block; swap `provider` to "postgresql" to scale later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums are represented as strings in SQLite. We keep the allowed values in
+// application code (src/lib/constants.ts) and store them as plain strings.
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String? // null until the user accepts their invite
+  role         String // DIRECTOR | SECRETARY | LANDLORD | RENTER | HELPER
+  phone        String?
+  active       Boolean  @default(true)
+  flatId       String?
+  flat         Flat?    @relation(fields: [flatId], references: [id], onDelete: SetNull)
+  invitedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  invites         Invite[]
+  announcements   Announcement[]    @relation("AnnouncementAuthor")
+  meetingsCreated Meeting[]         @relation("MeetingCreator")
+  attendance      MeetingAttendee[]
+  decisions       Decision[]        @relation("DecisionCreator")
+  documents       Document[]        @relation("DocumentUploader")
+  projectsCreated Project[]         @relation("ProjectCreator")
+  projectsAssigned Project[]        @relation("ProjectAssignee")
+  projectUpdates  ProjectUpdate[]
+}
+
+model Flat {
+  id        String   @id @default(cuid())
+  label     String   @unique // e.g. "Flat 3"
+  floor     String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  residents User[]
+}
+
+model Invite {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Announcement {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  audience    String    @default("ALL") // ALL | RESIDENTS | BOARD
+  authorId    String
+  author      User      @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  publishedAt DateTime? // null = draft
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  kind        String   @default("BOARD") // BOARD | AGM | EGM
+  scheduledAt DateTime
+  location    String?
+  agenda      String?
+  minutes     String?
+  status      String   @default("SCHEDULED") // SCHEDULED | HELD | CANCELLED
+  visibility  String   @default("INTERNAL") // PUBLIC | INTERNAL
+  createdById String
+  createdBy   User     @relation("MeetingCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendees MeetingAttendee[]
+  decisions Decision[]
+  documents Document[]
+}
+
+model MeetingAttendee {
+  id        String  @id @default(cuid())
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  present   Boolean @default(false)
+
+  @@unique([meetingId, userId])
+}
+
+model Decision {
+  id          String   @id @default(cuid())
+  title       String
+  detail      String
+  decidedAt   DateTime @default(now())
+  visibility  String   @default("PUBLIC") // PUBLIC | INTERNAL
+  meetingId   String?
+  meeting     Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  createdById String
+  createdBy   User     @relation("DecisionCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  title        String
+  filename     String // stored filename on disk
+  originalName String
+  mimeType     String
+  size         Int
+  category     String?
+  visibility   String   @default("INTERNAL") // PUBLIC | INTERNAL
+  uploadedById String
+  uploadedBy   User     @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  meetingId    String?
+  meeting      Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  projectId    String?
+  project      Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("OPEN") // OPEN | IN_PROGRESS | ON_HOLD | DONE
+  priority    String    @default("MED") // LOW | MED | HIGH
+  visibility  String    @default("INTERNAL") // PUBLIC | INTERNAL
+  dueDate     DateTime?
+  assigneeId  String?
+  assignee    User?     @relation("ProjectAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdById String
+  createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  updates   ProjectUpdate[]
+  tasks     ProjectTask[]
+  documents Document[]
+}
+
+model ProjectUpdate {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  body      String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model ProjectTask {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  done      Boolean @default(false)
+  createdAt DateTime @default(now())
+}
