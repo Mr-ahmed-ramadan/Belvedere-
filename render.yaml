@@ -1,0 +1,36 @@
+# Render Blueprint for Belvedere — https://render.com/docs/blueprint-spec
+# Deploy: in Render, New + → "Blueprint", pick this repo. Render reads this file,
+# creates the web service + a 1 GB persistent disk, and generates AUTH_SECRET.
+services:
+  - type: web
+    name: belvedere
+    runtime: node
+    plan: starter # a paid plan is required for a persistent disk (SQLite + uploads live on it)
+    region: oregon # change to frankfurt / singapore / ohio / virginia as you prefer
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npx prisma migrate deploy && npm run start
+    healthCheckPath: /login # returns 200 (public page)
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22.22.0"
+      # SQLite database file, kept on the persistent disk mounted below.
+      - key: DATABASE_URL
+        value: file:/var/data/belvedere.db
+      # Uploaded documents, also on the persistent disk.
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+      # Render generates a strong random secret for session signing.
+      - key: AUTH_SECRET
+        generateValue: true
+      # Emails print to the Render logs by default (no email account needed to try).
+      # To send real email, set EMAIL_PROVIDER=resend and add RESEND_API_KEY in the
+      # dashboard (never commit the key), and set EMAIL_FROM to a verified address.
+      - key: EMAIL_PROVIDER
+        value: console
+      - key: EMAIL_FROM
+        value: "Belvedere <noreply@example.com>"
+    disk:
+      name: belvedere-data
+      mountPath: /var/data
+      sizeGB: 1

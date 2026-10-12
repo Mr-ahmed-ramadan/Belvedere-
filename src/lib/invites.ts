@@ -10,7 +10,13 @@ export function hashPassword(password: string): Promise<string> {
 }
 
 function appUrl(): string {
-  return process.env.APP_URL || "http://localhost:3000";
+  // APP_URL wins (e.g. a custom domain); otherwise use the URL Render injects
+  // automatically (RENDER_EXTERNAL_URL); fall back to local dev.
+  return (
+    process.env.APP_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    "http://localhost:3000"
+  );
 }
 
 /**

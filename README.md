@@ -76,8 +76,12 @@ npx prisma studio   # browse/edit the database in a GUI
 ## Deployment
 
 The app needs a host with a **persistent disk** so the SQLite file and uploaded
-documents survive restarts (e.g. Railway, Render, Fly.io, or any VPS). Set these
-environment variables in production:
+documents survive restarts (e.g. Render, Railway, Fly.io, or any VPS).
+
+👉 **Deploying to Render? See [DEPLOY-RENDER.md](./DEPLOY-RENDER.md)** — the repo
+includes a `render.yaml` blueprint for one-click setup.
+
+For any host, set these environment variables in production:
 
 ```
 DATABASE_URL="file:/data/belvedere.db"   # on the persistent volume
