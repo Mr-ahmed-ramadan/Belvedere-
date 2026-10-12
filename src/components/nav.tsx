@@ -8,20 +8,30 @@ import { ROLE_LABELS, type Role } from "@/lib/constants";
 type NavProps = {
   user: { name: string; role: Role };
   isAdmin: boolean;
+  canFinance: boolean;
 };
 
-const links = [
-  { href: "/dashboard", label: "Dashboard", adminOnly: false },
-  { href: "/announcements", label: "Announcements", adminOnly: false },
-  { href: "/meetings", label: "Meetings", adminOnly: false },
-  { href: "/decisions", label: "Decisions", adminOnly: false },
-  { href: "/documents", label: "Documents", adminOnly: false },
-  { href: "/projects", label: "Projects", adminOnly: false },
-  { href: "/search", label: "Search", adminOnly: false },
+type NavLink = {
+  href: string;
+  label: string;
+  adminOnly?: boolean;
+  financeOnly?: boolean;
+};
+
+const links: NavLink[] = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/welcome", label: "New to Belvedere" },
+  { href: "/announcements", label: "Announcements" },
+  { href: "/meetings", label: "Meetings" },
+  { href: "/decisions", label: "Decisions" },
+  { href: "/documents", label: "Documents" },
+  { href: "/projects", label: "Projects" },
+  { href: "/finance", label: "Finance", financeOnly: true },
+  { href: "/search", label: "Search" },
   { href: "/admin/users", label: "People", adminOnly: true },
 ];
 
-export function Nav({ user, isAdmin }: NavProps) {
+export function Nav({ user, isAdmin, canFinance }: NavProps) {
   const pathname = usePathname();
 
   return (
@@ -44,7 +54,7 @@ export function Nav({ user, isAdmin }: NavProps) {
         </div>
         <nav className="flex flex-wrap gap-1 pb-2">
           {links
-            .filter((l) => !l.adminOnly || isAdmin)
+            .filter((l) => (!l.adminOnly || isAdmin) && (!l.financeOnly || canFinance))
             .map((l) => {
               const active =
                 pathname === l.href || pathname.startsWith(l.href + "/");

@@ -26,6 +26,25 @@ export function isHelper(role: Role): boolean {
 }
 
 /**
+ * Finance section is visible to the board (admins) and to landlords
+ * (leaseholders, who pay service charges). Renters and helpers cannot see it.
+ * Only admins can edit. Individual items can still be marked INTERNAL (below).
+ */
+export function canViewFinance(role: Role): boolean {
+  return isAdmin(role) || role === ROLES.LANDLORD;
+}
+
+/**
+ * Within finance, can this role see an item of the given visibility?
+ * Must be allowed into finance at all, and INTERNAL items are admin-only.
+ */
+export function canSeeFinanceItem(role: Role, visibility: string): boolean {
+  if (!canViewFinance(role)) return false;
+  if (isAdmin(role)) return true;
+  return visibility === "PUBLIC";
+}
+
+/**
  * Can a user with this role see an item with the given visibility?
  * Admins see everything; everyone else sees only PUBLIC items.
  * (Project-assignee access to internal projects is handled at the query level.)

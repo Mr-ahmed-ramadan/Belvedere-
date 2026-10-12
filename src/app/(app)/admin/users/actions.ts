@@ -102,7 +102,43 @@ export async function updateUserAction(
   return { success: "Saved." };
 }
 
+const blockSchema = z.object({
+  name: z.string().trim().min(1, "Block name is required."),
+  address: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export async function createBlockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const parsed = blockSchema.safeParse({
+    name: formData.get("name"),
+    address: formData.get("address") || undefined,
+    notes: formData.get("notes") || undefined,
+  });
+  if (!parsed.success)
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+
+  const existing = await prisma.block.findUnique({
+    where: { name: parsed.data.name },
+  });
+  if (existing) return { error: "A block with that name already exists." };
+
+  await prisma.block.create({
+    data: {
+      name: parsed.data.name,
+      address: parsed.data.address || null,
+      notes: parsed.data.notes || null,
+    },
+  });
+  revalidatePath("/admin/users");
+  return { success: `Block "${parsed.data.name}" added.` };
+}
+
 const flatSchema = z.object({
+  blockId: z.string().trim().min(1, "Please choose a block."),
   label: z.string().trim().min(1, "Flat label is required."),
   floor: z.string().trim().optional(),
   notes: z.string().trim().optional(),
@@ -114,6 +150,7 @@ export async function createFlatAction(
 ): Promise<ActionState> {
   await requireAdmin();
   const parsed = flatSchema.safeParse({
+    blockId: formData.get("blockId"),
     label: formData.get("label"),
     floor: formData.get("floor") || undefined,
     notes: formData.get("notes") || undefined,
@@ -121,18 +158,27 @@ export async function createFlatAction(
   if (!parsed.success)
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
 
-  const existing = await prisma.flat.findUnique({
-    where: { label: parsed.data.label },
+  const block = await prisma.block.findUnique({
+    where: { id: parsed.data.blockId },
   });
-  if (existing) return { error: "A flat with that label already exists." };
+  if (!block) return { error: "That block no longer exists." };
+
+  const existing = await prisma.flat.findUnique({
+    where: {
+      blockId_label: { blockId: parsed.data.blockId, label: parsed.data.label },
+    },
+  });
+  if (existing)
+    return { error: "A flat with that label already exists in this block." };
 
   await prisma.flat.create({
     data: {
       label: parsed.data.label,
+      blockId: parsed.data.blockId,
       floor: parsed.data.floor || null,
       notes: parsed.data.notes || null,
     },
   });
   revalidatePath("/admin/users");
-  return { success: `Flat "${parsed.data.label}" added.` };
+  return { success: `${block.name} — ${parsed.data.label} added.` };
 }

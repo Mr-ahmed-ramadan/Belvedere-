@@ -94,3 +94,29 @@ export const PROJECT_PRIORITY_LABELS: Record<ProjectPriority, string> = {
   MED: "Medium",
   HIGH: "High",
 };
+
+// Static info-page sections.
+export const SECTION = {
+  WELCOME: "WELCOME",
+  FINANCE: "FINANCE",
+} as const;
+export type Section = (typeof SECTION)[keyof typeof SECTION];
+
+// Suggested categories (free text is also allowed on the forms).
+export const WELCOME_CATEGORIES = [
+  "Facilities",
+  "Rules",
+  "Access & keys",
+  "Moving in",
+  "Refuse & recycling",
+  "Parking",
+  "Emergencies & contacts",
+  "General",
+];
+
+export const FINANCE_CATEGORIES = [
+  "Financial statements",
+  "Strategy",
+  "Service charge",
+  "General",
+];

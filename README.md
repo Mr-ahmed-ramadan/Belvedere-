@@ -29,6 +29,25 @@ Functionality and ease of use come first; the UI is deliberately plain.
 Every content item is either **Public** (residents can see it) or **Internal**
 (board & secretary only).
 
+## Sections
+
+- **New to Belvedere** — a resident handbook (facilities, rules, access & keys,
+  contacts…) visible to everyone, editable by the board. Pages can link a file
+  from the document library.
+- **Announcements, Meetings, Decisions, Documents, Projects** — see the role
+  table above.
+- **Finance** — the management company's financial position: a **reserve fund**
+  ledger with running balance, **budgets** (budgeted vs. actual with variance),
+  and **financial statements & strategy** pages. Visible to the **board and
+  landlords** (leaseholders); renters and helpers don't see it. Only the board
+  can edit. Individual budgets/pages can be marked internal (board-only).
+- **People** (admin) — accounts, roles, and the **blocks & flats** that make up
+  the property. The building is modelled as one or more **blocks**, each
+  containing its own flats; residents are linked to a flat.
+
+Financial figures use **GBP (£)** by default — change `CURRENCY` /
+`NEXT_PUBLIC_CURRENCY` in the environment to use another currency.
+
 ## Running locally
 
 Requires Node.js 20+.

@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/session";
-import { isAdmin } from "@/lib/permissions";
+import { isAdmin, canViewFinance } from "@/lib/permissions";
 import { Nav } from "@/components/nav";
 
 export default async function AppLayout({
@@ -14,6 +14,7 @@ export default async function AppLayout({
       <Nav
         user={{ name: user.name, role: user.role }}
         isAdmin={isAdmin(user.role)}
+        canFinance={canViewFinance(user.role)}
       />
       <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
     </div>

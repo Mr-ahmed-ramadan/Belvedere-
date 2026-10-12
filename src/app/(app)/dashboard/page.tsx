@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { isAdmin } from "@/lib/permissions";
+import { isAdmin, canViewFinance } from "@/lib/permissions";
+import { formatMoney } from "@/lib/money";
 import {
   announcementFilter,
   visibilityFilter,
@@ -22,7 +23,13 @@ import { SearchBox } from "@/components/search-box";
 export default async function DashboardPage() {
   const user = await requireUser();
   const admin = isAdmin(user.role);
+  const showFinance = canViewFinance(user.role);
   const now = new Date();
+
+  const reserveBalance = showFinance
+    ? (await prisma.reserveFundEntry.aggregate({ _sum: { amount: true } }))._sum
+        .amount ?? 0
+    : 0;
 
   const [announcements, upcomingMeetings, openProjects, recentDecisions, drafts] =
     await Promise.all([
@@ -65,6 +72,19 @@ export default async function DashboardPage() {
       <PageHeader title={`Welcome, ${user.name}`} />
 
       <SearchBox />
+
+      {showFinance ? (
+        <Link
+          href="/finance"
+          className="card flex items-center justify-between hover:border-blue-400"
+        >
+          <div>
+            <p className="text-sm text-gray-500">Reserve fund balance</p>
+            <p className="text-2xl font-bold">{formatMoney(reserveBalance)}</p>
+          </div>
+          <span className="link text-sm">View finance →</span>
+        </Link>
+      ) : null}
 
       {admin && drafts > 0 ? (
         <div className="rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">

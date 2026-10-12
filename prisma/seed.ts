@@ -8,42 +8,59 @@ const DEFAULT_PASSWORD = "password123";
 async function main() {
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
-  // --- Flats ---
-  const flatLabels = ["Flat 1", "Flat 2", "Flat 3", "Flat 4", "Flat 5"];
-  const flats = await Promise.all(
-    flatLabels.map((label, i) =>
-      prisma.flat.upsert({
-        where: { label },
-        update: {},
-        create: { label, floor: `Floor ${Math.ceil((i + 1) / 2)}` },
-      }),
-    ),
-  );
+  // --- Blocks + flats (the property is a set of blocks, each with flats) ---
+  const blockData = [
+    { name: "Belvedere House", floors: 2, flats: ["Flat 1", "Flat 2", "Flat 3"] },
+    { name: "Belvedere Court", floors: 2, flats: ["Flat 1", "Flat 2"] },
+  ];
 
-  // --- Users (all active with the default password for easy testing) ---
+  const flatByKey: Record<string, string> = {};
+  for (const b of blockData) {
+    const block = await prisma.block.upsert({
+      where: { name: b.name },
+      update: {},
+      create: { name: b.name },
+    });
+    for (let i = 0; i < b.flats.length; i++) {
+      const label = b.flats[i];
+      const flat = await prisma.flat.upsert({
+        where: { blockId_label: { blockId: block.id, label } },
+        update: {},
+        create: {
+          label,
+          blockId: block.id,
+          floor: `Floor ${Math.ceil((i + 1) / 2)}`,
+        },
+      });
+      flatByKey[`${b.name}/${label}`] = flat.id;
+    }
+  }
+
+  // --- Users ---
   const people: Array<{
     name: string;
     email: string;
     role: string;
-    flatId?: string;
+    flatKey?: string;
   }> = [
-    { name: "Dana Director", email: "director@belvedere.test", role: "DIRECTOR", flatId: flats[0].id },
-    { name: "Sam Secretary", email: "secretary@belvedere.test", role: "SECRETARY", flatId: flats[1].id },
-    { name: "Laura Landlord", email: "landlord@belvedere.test", role: "LANDLORD", flatId: flats[2].id },
-    { name: "Rob Renter", email: "renter@belvedere.test", role: "RENTER", flatId: flats[3].id },
+    { name: "Dana Director", email: "director@belvedere.test", role: "DIRECTOR", flatKey: "Belvedere House/Flat 1" },
+    { name: "Sam Secretary", email: "secretary@belvedere.test", role: "SECRETARY", flatKey: "Belvedere House/Flat 2" },
+    { name: "Laura Landlord", email: "landlord@belvedere.test", role: "LANDLORD", flatKey: "Belvedere House/Flat 3" },
+    { name: "Rob Renter", email: "renter@belvedere.test", role: "RENTER", flatKey: "Belvedere Court/Flat 1" },
     { name: "Harry Helper", email: "helper@belvedere.test", role: "HELPER" },
   ];
 
   const users: Record<string, { id: string }> = {};
   for (const p of people) {
+    const flatId = p.flatKey ? flatByKey[p.flatKey] ?? null : null;
     const u = await prisma.user.upsert({
       where: { email: p.email },
-      update: { role: p.role, flatId: p.flatId ?? null },
+      update: { role: p.role, flatId },
       create: {
         name: p.name,
         email: p.email,
         role: p.role,
-        flatId: p.flatId ?? null,
+        flatId,
         passwordHash,
         active: true,
         invitedAt: new Date(),
@@ -57,8 +74,7 @@ async function main() {
   const helper = users["HELPER"].id;
 
   // --- Announcements ---
-  const announcementCount = await prisma.announcement.count();
-  if (announcementCount === 0) {
+  if ((await prisma.announcement.count()) === 0) {
     await prisma.announcement.createMany({
       data: [
         {
@@ -79,9 +95,8 @@ async function main() {
     });
   }
 
-  // --- Meeting with attendees + minutes + a decision ---
-  const meetingCount = await prisma.meeting.count();
-  if (meetingCount === 0) {
+  // --- Meeting + decision ---
+  if ((await prisma.meeting.count()) === 0) {
     const meeting = await prisma.meeting.create({
       data: {
         title: "Q3 Board Meeting",
@@ -102,7 +117,6 @@ async function main() {
         },
       },
     });
-
     await prisma.decision.create({
       data: {
         title: "Appoint Contractor B for roof repairs",
@@ -114,8 +128,6 @@ async function main() {
         createdById: secretary,
       },
     });
-
-    // Upcoming meeting
     await prisma.meeting.create({
       data: {
         title: "Annual General Meeting",
@@ -130,9 +142,8 @@ async function main() {
     });
   }
 
-  // --- Projects / cases ---
-  const projectCount = await prisma.project.count();
-  if (projectCount === 0) {
+  // --- Projects ---
+  if ((await prisma.project.count()) === 0) {
     await prisma.project.create({
       data: {
         title: "Roof repairs",
@@ -143,14 +154,7 @@ async function main() {
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         assigneeId: helper,
         createdById: director,
-        updates: {
-          create: [
-            {
-              body: "Contractor B scheduled to start on the 15th.",
-              authorId: director,
-            },
-          ],
-        },
+        updates: { create: [{ body: "Contractor B scheduled to start on the 15th.", authorId: director }] },
         tasks: {
           create: [
             { title: "Accept quote", done: true },
@@ -160,7 +164,6 @@ async function main() {
         },
       },
     });
-
     await prisma.project.create({
       data: {
         title: "Review garden maintenance contract",
@@ -169,6 +172,113 @@ async function main() {
         priority: "MED",
         visibility: "INTERNAL",
         createdById: secretary,
+      },
+    });
+  }
+
+  // --- "New to Belvedere" welcome pages ---
+  if ((await prisma.infoPage.count({ where: { section: "WELCOME" } })) === 0) {
+    await prisma.infoPage.createMany({
+      data: [
+        {
+          section: "WELCOME",
+          category: "Facilities",
+          title: "Building facilities",
+          body: "Shared facilities include the ground-floor common room (bookable via the secretary), bike store in the basement, and bin store by the side entrance. The lift serves all floors.",
+          order: 1,
+          visibility: "PUBLIC",
+          createdById: secretary,
+        },
+        {
+          section: "WELCOME",
+          category: "Rules",
+          title: "House rules",
+          body: "Quiet hours are 10pm–8am. No smoking in common areas. Please break down cardboard before recycling. Communal doors must be kept closed for security.",
+          order: 2,
+          visibility: "PUBLIC",
+          createdById: secretary,
+        },
+        {
+          section: "WELCOME",
+          category: "Access & keys",
+          title: "Access, keys and fobs",
+          body: "Each flat is issued two entry fobs. Replacements can be requested from the secretary (a charge applies). The tradesperson intercom code changes annually — current residents are notified by announcement.",
+          order: 3,
+          visibility: "PUBLIC",
+          createdById: secretary,
+        },
+        {
+          section: "WELCOME",
+          category: "Emergencies & contacts",
+          title: "Emergencies & key contacts",
+          body: "For building emergencies (water leaks, lift entrapment, power), call the managing contacts listed here. For life-threatening emergencies always call 999 first.",
+          order: 4,
+          visibility: "PUBLIC",
+          createdById: secretary,
+        },
+      ],
+    });
+  }
+
+  // --- Finance: strategy & statements pages ---
+  if ((await prisma.infoPage.count({ where: { section: "FINANCE" } })) === 0) {
+    await prisma.infoPage.createMany({
+      data: [
+        {
+          section: "FINANCE",
+          category: "Strategy",
+          title: "Financial strategy 2024–2027",
+          body: "Our aim is to build the reserve fund to cover the next major works cycle (roof, external decoration, lift refurbishment) without special levies. Service charges are reviewed annually at the AGM.",
+          order: 1,
+          visibility: "PUBLIC",
+          createdById: director,
+        },
+        {
+          section: "FINANCE",
+          category: "Financial statements",
+          title: "Year-end accounts 2023",
+          body: "The audited service charge accounts for the year ending 31 December 2023 were approved at the AGM. A copy can be linked here once uploaded to the document library.",
+          order: 2,
+          visibility: "PUBLIC",
+          createdById: director,
+        },
+      ],
+    });
+  }
+
+  // --- Finance: reserve fund ledger ---
+  if ((await prisma.reserveFundEntry.count()) === 0) {
+    await prisma.reserveFundEntry.createMany({
+      data: [
+        { date: new Date("2024-01-01"), description: "Opening balance", amount: 18500, createdById: director },
+        { date: new Date("2024-04-01"), description: "Q1 reserve contributions", amount: 3200, createdById: secretary },
+        { date: new Date("2024-07-01"), description: "Q2 reserve contributions", amount: 3200, createdById: secretary },
+        { date: new Date("2024-08-15"), description: "Gutter repairs", amount: -1250, createdById: director },
+        { date: new Date("2024-10-01"), description: "Q3 reserve contributions", amount: 3200, createdById: secretary },
+      ],
+    });
+  }
+
+  // --- Finance: a budget with lines ---
+  if ((await prisma.budget.count()) === 0) {
+    await prisma.budget.create({
+      data: {
+        year: 2025,
+        title: "Service charge budget 2025",
+        note: "Draft budget to be approved at the AGM.",
+        visibility: "PUBLIC",
+        createdById: director,
+        lines: {
+          create: [
+            { category: "Buildings insurance", budgeted: 6200, actual: 0, order: 1 },
+            { category: "Cleaning", budgeted: 3600, actual: 0, order: 2 },
+            { category: "Gardening", budgeted: 1800, actual: 0, order: 3 },
+            { category: "Lift maintenance", budgeted: 1500, actual: 0, order: 4 },
+            { category: "Electricity (communal)", budgeted: 1200, actual: 0, order: 5 },
+            { category: "Reserve fund contribution", budgeted: 12000, actual: 0, order: 6 },
+            { category: "Management & accountancy", budgeted: 2400, actual: 0, order: 7 },
+          ],
+        },
       },
     });
   }

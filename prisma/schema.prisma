@@ -38,16 +38,34 @@ model User {
   projectsCreated Project[]         @relation("ProjectCreator")
   projectsAssigned Project[]        @relation("ProjectAssignee")
   projectUpdates  ProjectUpdate[]
+  infoPages       InfoPage[]        @relation("InfoPageAuthor")
+  reserveEntries  ReserveFundEntry[] @relation("ReserveEntryAuthor")
+  budgets         Budget[]          @relation("BudgetAuthor")
+}
+
+// The property is made up of one or more blocks; each block contains flats.
+model Block {
+  id        String   @id @default(cuid())
+  name      String   @unique // e.g. "Belvedere House", "Block A"
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  flats Flat[]
 }
 
 model Flat {
   id        String   @id @default(cuid())
-  label     String   @unique // e.g. "Flat 3"
+  label     String // e.g. "Flat 3" — unique within its block
   floor     String?
   notes     String?
+  blockId   String?
+  block     Block?   @relation(fields: [blockId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 
   residents User[]
+
+  @@unique([blockId, label])
 }
 
 model Invite {
@@ -133,6 +151,8 @@ model Document {
   projectId    String?
   project      Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
+
+  infoPages InfoPage[]
 }
 
 model Project {
@@ -172,4 +192,56 @@ model ProjectTask {
   title     String
   done      Boolean @default(false)
   createdAt DateTime @default(now())
+}
+
+// Static information pages. section = WELCOME ("New to Belvedere" handbook:
+// facilities, rules, access…) or FINANCE (statements notes, strategy…).
+model InfoPage {
+  id          String    @id @default(cuid())
+  section     String // WELCOME | FINANCE
+  category    String?
+  title       String
+  body        String
+  visibility  String    @default("PUBLIC") // PUBLIC | INTERNAL
+  order       Int       @default(0)
+  documentId  String? // optional linked file in the document library
+  document    Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  createdById String
+  createdBy   User      @relation("InfoPageAuthor", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Reserve fund ledger. amount > 0 = contribution/income, < 0 = expense.
+model ReserveFundEntry {
+  id          String   @id @default(cuid())
+  date        DateTime
+  description String
+  amount      Float
+  createdById String
+  createdBy   User     @relation("ReserveEntryAuthor", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Budget {
+  id          String       @id @default(cuid())
+  year        Int
+  title       String?
+  note        String?
+  visibility  String       @default("PUBLIC") // PUBLIC | INTERNAL
+  createdById String
+  createdBy   User         @relation("BudgetAuthor", fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  lines       BudgetLine[]
+}
+
+model BudgetLine {
+  id       String @id @default(cuid())
+  budgetId String
+  budget   Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category String
+  budgeted Float  @default(0)
+  actual   Float  @default(0)
+  order    Int    @default(0)
 }

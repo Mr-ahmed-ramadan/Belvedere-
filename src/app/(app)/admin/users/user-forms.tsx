@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import {
   createUserAction,
   createFlatAction,
+  createBlockAction,
   type ActionState,
 } from "./actions";
 import { ALL_ROLES, ROLE_LABELS } from "@/lib/constants";
@@ -11,6 +12,7 @@ import { ALL_ROLES, ROLE_LABELS } from "@/lib/constants";
 const initial: ActionState = {};
 
 type Flat = { id: string; label: string };
+type Block = { id: string; name: string };
 
 export function AddUserForm({ flats }: { flats: Flat[] }) {
   const [state, action, pending] = useActionState(createUserAction, initial);
@@ -79,9 +81,8 @@ export function AddUserForm({ flats }: { flats: Flat[] }) {
   );
 }
 
-export function AddFlatForm() {
-  const [state, action, pending] = useActionState(createFlatAction, initial);
-
+export function AddBlockForm() {
+  const [state, action, pending] = useActionState(createBlockAction, initial);
   return (
     <form action={action} className="space-y-3">
       {state.error ? (
@@ -95,6 +96,74 @@ export function AddFlatForm() {
         </p>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className="label" htmlFor="block-name">
+            Block name
+          </label>
+          <input
+            id="block-name"
+            name="name"
+            placeholder="Belvedere House"
+            required
+            className="input"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="block-address">
+            Address (optional)
+          </label>
+          <input id="block-address" name="address" className="input" />
+        </div>
+        <div>
+          <label className="label" htmlFor="block-notes">
+            Notes (optional)
+          </label>
+          <input id="block-notes" name="notes" className="input" />
+        </div>
+      </div>
+      <button type="submit" className="btn" disabled={pending}>
+        {pending ? "Adding…" : "Add block"}
+      </button>
+    </form>
+  );
+}
+
+export function AddFlatForm({ blocks }: { blocks: Block[] }) {
+  const [state, action, pending] = useActionState(createFlatAction, initial);
+
+  if (blocks.length === 0) {
+    return (
+      <p className="text-sm text-gray-500">
+        Add a block first, then you can add flats to it.
+      </p>
+    );
+  }
+
+  return (
+    <form action={action} className="space-y-3">
+      {state.error ? (
+        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+          {state.error}
+        </p>
+      ) : null}
+      {state.success ? (
+        <p className="rounded bg-green-50 px-3 py-2 text-sm text-green-700">
+          {state.success}
+        </p>
+      ) : null}
+      <div className="grid gap-3 sm:grid-cols-4">
+        <div>
+          <label className="label" htmlFor="flat-block">
+            Block
+          </label>
+          <select id="flat-block" name="blockId" required className="input">
+            {blocks.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="label" htmlFor="label">
             Flat label

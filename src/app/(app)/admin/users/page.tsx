@@ -2,21 +2,29 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
 import { type Role } from "@/lib/constants";
-import { AddUserForm, AddFlatForm } from "./user-forms";
+import { AddUserForm, AddFlatForm, AddBlockForm } from "./user-forms";
 import { UserRow } from "./user-row";
 
 export default async function UsersPage() {
   const admin = await requireAdmin();
 
-  const [users, flats] = await Promise.all([
+  const [users, blocks] = await Promise.all([
     prisma.user.findMany({
       orderBy: [{ active: "desc" }, { name: "asc" }],
-      include: { flat: true },
+      include: { flat: { include: { block: true } } },
     }),
-    prisma.flat.findMany({ orderBy: { label: "asc" } }),
+    prisma.block.findMany({
+      orderBy: { name: "asc" },
+      include: { flats: { orderBy: { label: "asc" } } },
+    }),
   ]);
 
-  const flatOptions = flats.map((f) => ({ id: f.id, label: f.label }));
+  const blockOptions = blocks.map((b) => ({ id: b.id, name: b.name }));
+  // Flat picker options, qualified by block, e.g. "Belvedere House — Flat 1".
+  const flatOptions = blocks.flatMap((b) =>
+    b.flats.map((f) => ({ id: f.id, label: `${b.name} — ${f.label}` })),
+  );
+  const totalFlats = flatOptions.length;
 
   return (
     <div className="space-y-8">
@@ -66,20 +74,56 @@ export default async function UsersPage() {
       </section>
 
       <section className="card">
-        <h2 className="mb-3 text-lg font-semibold">Flats ({flats.length})</h2>
-        {flats.length > 0 ? (
-          <ul className="mb-4 flex flex-wrap gap-2">
-            {flats.map((f) => (
-              <li key={f.id} className="badge bg-gray-100 text-gray-700">
-                {f.label}
-                {f.floor ? ` · ${f.floor}` : ""}
-              </li>
+        <h2 className="mb-1 text-lg font-semibold">
+          Blocks &amp; flats ({blocks.length} block
+          {blocks.length === 1 ? "" : "s"}, {totalFlats} flat
+          {totalFlats === 1 ? "" : "s"})
+        </h2>
+        <p className="mb-4 text-sm text-gray-600">
+          The property is made up of one or more blocks; each block contains its
+          own flats.
+        </p>
+
+        {blocks.length > 0 ? (
+          <div className="mb-6 space-y-4">
+            {blocks.map((b) => (
+              <div key={b.id} className="rounded border border-gray-200 p-3">
+                <div className="font-medium">{b.name}</div>
+                {b.address ? (
+                  <div className="text-xs text-gray-500">{b.address}</div>
+                ) : null}
+                {b.flats.length > 0 ? (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {b.flats.map((f) => (
+                      <li
+                        key={f.id}
+                        className="badge bg-gray-100 text-gray-700"
+                      >
+                        {f.label}
+                        {f.floor ? ` · ${f.floor}` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-xs text-gray-400">No flats yet.</p>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <p className="mb-4 text-sm text-gray-500">No flats added yet.</p>
+          <p className="mb-4 text-sm text-gray-500">No blocks added yet.</p>
         )}
-        <AddFlatForm />
+
+        <div className="space-y-6 border-t border-gray-200 pt-4">
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Add a block</h3>
+            <AddBlockForm />
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Add a flat to a block</h3>
+            <AddFlatForm blocks={blockOptions} />
+          </div>
+        </div>
       </section>
     </div>
   );
