@@ -17,6 +17,7 @@ const links = [
   { href: "/decisions", label: "Decisions", adminOnly: false },
   { href: "/documents", label: "Documents", adminOnly: false },
   { href: "/projects", label: "Projects", adminOnly: false },
+  { href: "/search", label: "Search", adminOnly: false },
   { href: "/admin/users", label: "People", adminOnly: true },
 ];
 
