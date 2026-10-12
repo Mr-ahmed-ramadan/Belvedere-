@@ -20,3 +20,17 @@ export function visibilityFilter(role: Role): { visibility?: string } {
   if (isAdmin(role)) return {};
   return { visibility: VISIBILITY.PUBLIC };
 }
+
+/**
+ * Projects filter: admins see all; everyone else sees PUBLIC projects plus any
+ * project assigned to them (so a helper can see internal jobs they're on).
+ */
+export function projectFilter(
+  role: Role,
+  userId: string,
+): Prisma.ProjectWhereInput {
+  if (isAdmin(role)) return {};
+  return {
+    OR: [{ visibility: VISIBILITY.PUBLIC }, { assigneeId: userId }],
+  };
+}
