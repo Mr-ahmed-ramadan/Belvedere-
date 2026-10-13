@@ -301,6 +301,7 @@ async function main() {
   for (const [key, value] of [
     ["whatsapp_residents_url", "https://chat.whatsapp.com/EXAMPLE-residents"],
     ["whatsapp_board_url", "https://chat.whatsapp.com/EXAMPLE-board"],
+    ["contact_email", "enquiries@belvederecourtputney.co.uk"],
   ] as const) {
     await prisma.setting.upsert({
       where: { key },

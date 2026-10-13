@@ -10,6 +10,7 @@ export default async function SettingsPage() {
     SETTING_KEYS.WHATSAPP_RESIDENTS,
     SETTING_KEYS.WHATSAPP_BOARD,
     SETTING_KEYS.HERO_IMAGE,
+    SETTING_KEYS.CONTACT_EMAIL,
   ]);
 
   return (
@@ -24,6 +25,7 @@ export default async function SettingsPage() {
             whatsappResidents: s[SETTING_KEYS.WHATSAPP_RESIDENTS] ?? "",
             whatsappBoard: s[SETTING_KEYS.WHATSAPP_BOARD] ?? "",
             heroImage: s[SETTING_KEYS.HERO_IMAGE] ?? "",
+            contactEmail: s[SETTING_KEYS.CONTACT_EMAIL] ?? "",
           }}
         />
       </div>

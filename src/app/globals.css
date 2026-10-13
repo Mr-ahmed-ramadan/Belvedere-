@@ -37,3 +37,15 @@ body {
     @apply text-blue-700 underline hover:text-blue-900;
   }
 }
+
+/* Landing hero: readable text over photos, and a crossfading carousel. */
+.hero-text {
+  text-shadow: 0 1px 12px rgba(2, 6, 23, 0.6), 0 1px 3px rgba(2, 6, 23, 0.5);
+}
+.hero-slide {
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+.hero-slide.is-active {
+  opacity: 1;
+}

@@ -151,4 +151,12 @@ export const SETTING_KEYS = {
   WHATSAPP_RESIDENTS: "whatsapp_residents_url",
   WHATSAPP_BOARD: "whatsapp_board_url",
   HERO_IMAGE: "hero_image_url",
+  CONTACT_EMAIL: "contact_email",
+} as const;
+
+// The development's location, used for the landing page and the map.
+export const BUILDING = {
+  name: "Belvedere Court",
+  area: "Putney, London",
+  postcode: "SW15 6HZ",
 } as const;

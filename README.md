@@ -47,11 +47,15 @@ Every content item is either **Public** (residents can see it) or **Internal**
   person) and free-text notes. People who don't use email/tech are **highlighted**
   so the board knows to phone or post instead.
 - **Settings** (admin) — the **WhatsApp group links** (a residents group shown to
-  everyone, a board group shown only to directors/secretary) and an optional
-  **photo for the sign-in page**.
+  everyone, a board group shown only to directors/secretary), an **enquiries
+  email** shown on the sign-in page, and an optional **custom photo** for the
+  sign-in page.
 
-The **sign-in page is a landing page** for Belvedere Court, Putney, and the whole
-app is **mobile-friendly** (the menu collapses on small screens).
+The **sign-in page is a landing page** for Belvedere Court, Putney (SW15 6HZ): a
+**photo carousel** of the building behind the welcome text, an **embedded map**
+pinned to the postcode, and an **enquiries** contact for prospective buyers/
+renters or anyone wanting to reach the management company. The whole app is
+**mobile-friendly** (the menu collapses on small screens).
 
 Financial figures use **GBP (£)** by default — change `CURRENCY` /
 `NEXT_PUBLIC_CURRENCY` in the environment to use another currency.

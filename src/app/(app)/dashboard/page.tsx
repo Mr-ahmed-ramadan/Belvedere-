@@ -87,19 +87,6 @@ export default async function DashboardPage() {
         isAdmin={admin}
       />
 
-      {showFinance ? (
-        <Link
-          href="/finance"
-          className="card flex items-center justify-between hover:border-blue-400"
-        >
-          <div>
-            <p className="text-sm text-gray-500">Reserve fund balance</p>
-            <p className="text-2xl font-bold">{formatMoney(reserveBalance)}</p>
-          </div>
-          <span className="link text-sm">View finance →</span>
-        </Link>
-      ) : null}
-
       {admin && drafts > 0 ? (
         <div className="rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
           You have {drafts} unpublished announcement draft(s).{" "}
@@ -221,6 +208,19 @@ export default async function DashboardPage() {
           )}
         </section>
       </div>
+
+      {showFinance ? (
+        <Link
+          href="/finance"
+          className="card flex items-center justify-between hover:border-blue-400"
+        >
+          <div>
+            <p className="text-sm text-gray-500">Reserve fund balance</p>
+            <p className="text-2xl font-bold">{formatMoney(reserveBalance)}</p>
+          </div>
+          <span className="link text-sm">View finance →</span>
+        </Link>
+      ) : null}
     </div>
   );
 }

@@ -8,7 +8,12 @@ const initial: ActionState = {};
 export function SettingsForm({
   defaults,
 }: {
-  defaults: { whatsappResidents: string; whatsappBoard: string; heroImage: string };
+  defaults: {
+    whatsappResidents: string;
+    whatsappBoard: string;
+    heroImage: string;
+    contactEmail: string;
+  };
 }) {
   const [state, action, pending] = useActionState(saveSettingsAction, initial);
 
@@ -54,6 +59,24 @@ export function SettingsForm({
         />
         <p className="mt-1 text-xs text-gray-500">
           Shown only to directors and the secretary.
+        </p>
+      </div>
+
+      <div>
+        <label className="label" htmlFor="contactEmail">
+          Enquiries / management contact email
+        </label>
+        <input
+          id="contactEmail"
+          name="contactEmail"
+          type="email"
+          defaultValue={defaults.contactEmail}
+          placeholder="enquiries@example.com"
+          className="input"
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          Shown on the public sign-in page so interested buyers, renters or
+          others can reach the management company.
         </p>
       </div>
 
