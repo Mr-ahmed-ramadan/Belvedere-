@@ -15,34 +15,28 @@ export default async function LoginPage() {
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
 
-  const heroImage = await getSetting(SETTING_KEYS.HERO_IMAGE);
+  // A real photo of the building ships with the app; the board can override it
+  // with their own photo URL in Settings.
+  const heroImage =
+    (await getSetting(SETTING_KEYS.HERO_IMAGE)) || "/belvedere-court.jpg";
 
   return (
     <main className="grid min-h-screen md:grid-cols-2">
       {/* Hero / landing panel */}
       <section
         className="relative flex flex-col justify-between overflow-hidden px-6 py-10 text-white sm:px-10"
-        style={
-          heroImage
-            ? {
-                backgroundImage: `linear-gradient(to bottom right, rgba(12,74,110,0.82), rgba(15,23,42,0.82)), url(${heroImage})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }
-            : {
-                backgroundImage:
-                  "linear-gradient(to bottom right, #0c4a6e, #0f766e, #0f172a)",
-              }
-        }
+        style={{
+          backgroundImage: `linear-gradient(to bottom right, rgba(12,74,110,0.86), rgba(15,23,42,0.80)), url(${heroImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
-        {!heroImage ? <BuildingBackdrop /> : null}
-
         <div className="relative z-10">
           <p className="text-sm font-medium uppercase tracking-widest text-sky-200">
             Residents&apos; Portal
           </p>
           <h1 className="mt-2 text-4xl font-bold sm:text-5xl">Belvedere Court</h1>
-          <p className="mt-1 text-lg text-sky-100">Putney, London SW15</p>
+          <p className="mt-1 text-lg text-sky-100">Putney, London SW15 6HZ</p>
         </div>
 
         <div className="relative z-10 mt-8 max-w-md">
@@ -88,50 +82,5 @@ export default async function LoginPage() {
         </div>
       </section>
     </main>
-  );
-}
-
-/** Decorative building skyline used when no real photo is set. */
-function BuildingBackdrop() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 400 300"
-      className="pointer-events-none absolute bottom-0 right-0 h-2/3 w-auto opacity-20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g fill="#ffffff">
-        <rect x="40" y="120" width="70" height="180" />
-        <rect x="120" y="70" width="90" height="230" />
-        <rect x="220" y="110" width="70" height="190" />
-        <rect x="300" y="60" width="70" height="240" />
-      </g>
-      {/* windows */}
-      <g fill="#0c4a6e">
-        {[0, 1, 2, 3, 4].map((r) =>
-          [0, 1].map((c) => (
-            <rect
-              key={`a${r}-${c}`}
-              x={130 + c * 35}
-              y={90 + r * 40}
-              width="18"
-              height="24"
-            />
-          )),
-        )}
-        {[0, 1, 2, 3, 4, 5].map((r) =>
-          [0, 1].map((c) => (
-            <rect
-              key={`b${r}-${c}`}
-              x={310 + c * 30}
-              y={80 + r * 35}
-              width="16"
-              height="22"
-            />
-          )),
-        )}
-      </g>
-    </svg>
   );
 }
